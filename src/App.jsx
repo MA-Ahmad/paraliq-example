@@ -52,26 +52,26 @@ function App() {
     console.log('event.origin', event.origin)
     console.log('check ============>', event.data)
 
-    if (event.origin === parser.origin) {
-      let receivedData = JSON.parse(event.data)
-      if (receivedData.type === 'signMessage') {
-        /// handling request to sign a message
-        signAuthMessage(receivedData.payload.message)
-          .then((res) => {
-            sendToIframe('signMessage', {
-              ...receivedData.payload,
-              signature: res,
-            })
+    // if (event.origin === parser.origin) {
+    let receivedData = JSON.parse(event.data)
+    if (receivedData.type === 'signMessage') {
+      /// handling request to sign a message
+      signAuthMessage(receivedData.payload.message)
+        .then((res) => {
+          sendToIframe('signMessage', {
+            ...receivedData.payload,
+            signature: res,
           })
-          .catch((err) => console.log('sign auth message err:', err))
-      } else if (receivedData.type === 'sendTx') {
-        /// handling request to send tx
-        setTxPayload(receivedData.payload)
-      } else if (receivedData.type === 'switchNetwork') {
-        /// handling request to change chainId
-        switchNetwork(receivedData.payload.chainId)
-      }
+        })
+        .catch((err) => console.log('sign auth message err:', err))
+    } else if (receivedData.type === 'sendTx') {
+      /// handling request to send tx
+      setTxPayload(receivedData.payload)
+    } else if (receivedData.type === 'switchNetwork') {
+      /// handling request to change chainId
+      switchNetwork(receivedData.payload.chainId)
     }
+    // }
   }
 
   function handleMessage(event) {
@@ -80,24 +80,24 @@ function App() {
     let parser = document.createElement('a')
     parser.href = GAMES_URL
 
-    if (event.origin === parser.origin) {
-      let receivedData = JSON.parse(event.data)
-      if (receivedData.type === 'setGamePlaying') {
-        /// handling request to setGamePlaying
-        setGamePlaying(receivedData.payload.value)
-      } else if (receivedData.type === 'newGameHistory') {
-        /// handling request to add game to history
-        setGameHistory((prevArr) => [receivedData.payload, ...prevArr])
-      } else if (receivedData.type === 'requestToWalletConnect') {
-        /// handling request to connect wallet btn
-        const user = 'user'
-        if (!user) {
-          openWalletModal()
-        } else {
-          sendToIframe('editData', { set: { isExternalWalletConnected: true } })
-        }
+    // if (event.origin === parser.origin) {
+    let receivedData = JSON.parse(event.data)
+    if (receivedData.type === 'setGamePlaying') {
+      /// handling request to setGamePlaying
+      setGamePlaying(receivedData.payload.value)
+    } else if (receivedData.type === 'newGameHistory') {
+      /// handling request to add game to history
+      setGameHistory((prevArr) => [receivedData.payload, ...prevArr])
+    } else if (receivedData.type === 'requestToWalletConnect') {
+      /// handling request to connect wallet btn
+      const user = 'user'
+      if (!user) {
+        openWalletModal()
+      } else {
+        sendToIframe('editData', { set: { isExternalWalletConnected: true } })
       }
     }
+    // }
   }
 
   function sendToIframe(eventType, eventPayload) {
@@ -179,9 +179,10 @@ function App() {
     }
   }, [active, account])
 
+  const preferredChainId = 42161
   // track network change
   useEffect(() => {
-    setSupportedNetwork(421614 === 421614)
+    setSupportedNetwork(chainId === preferredChainId)
   }, [chainId])
 
   useEffect(() => {
@@ -194,13 +195,14 @@ function App() {
 
   const signAuthMessage = async (message) => {
     if (!library) return
-    // const signature = library.getSigner().signMessage(message)
-    // return signature
-    const provider = new ethers.providers.Web3Provider(window.ethereum)
-    const signer = provider.getSigner()
-    const signedMessage = await signer.signMessage(message)
-    console.log('<===== Signed message ====>', signedMessage)
-    return signedMessage
+    const signature = library.getSigner().signMessage(message)
+    return signature
+
+    // const provider = new ethers.providers.Web3Provider(window.ethereum)
+    // const signer = provider.getSigner()
+    // const signedMessage = await signer.signMessage(message)
+    // console.log('<===== Signed message ====>', signedMessage)
+    // return signedMessage
   }
 
   const disconnect = () => {
